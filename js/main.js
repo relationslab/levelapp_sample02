@@ -4,14 +4,20 @@ function rand(num) {
     return Math.floor(Math.random() * num);
 }
 
+function rateOf(num) {
+  return rand(num) == 1;
+}
+
 window.onload = function() {
     core = new Core(320, 480);
-    core.rootScene.backgroundColor = "rgb(80,239,255)";
+    core.rootScene.backgroundColor = 'rgb(80,239,255)';
 
-    core.preload("./koguma1.png", "./koguma2.png", "./ground.png", "./enemy.png");
+    core.preload('./images/cogoo.png', './images/enemy.png', './images/background.png');
 
     core.onload = function() {
       var field = new Field();
+      field.x = 0;
+      field.y = 0;
       core.rootScene.addChild(field);
     }
 
@@ -19,35 +25,67 @@ window.onload = function() {
 }
 
 var Field = enchant.Class.create(enchant.Group, (function() {
-  var core, background, ground, koguma;
+  var MARGIN_TOP = 100;
+  var HEIGHT = 300;
+  var core, koguma, scoreLabel, vectorY = 0;
+  var level = 1;
   var enemies = [];
 
   function initialize() {
     core = enchant.Core.instance;
     enchant.Group.call(this, core.width, core.height);
 
-    background = new Sprite(core.width, core.height);
-    ground = new Ground();
+    // background image
+    var background = new Sprite(core.width, HEIGHT);
+    background.image = core.assets['./images/background.png'];
+    background.y = MARGIN_TOP;
     this.addChild(background);
-    this.addChild(ground);
 
-    koguma = new Koguma(50, 75, core.height - ground.height - 75);
+    // Koguma
+    koguma = new Koguma();
     koguma.x = 0;
-    koguma.y = core.height - ground.height - koguma.height;
-
+    koguma.y = core.height / 2;
     this.addChild(koguma);
+
+    // Score Label
+    scoreLabel = new ScoreLabel(5, 5);
+    this.addChild(scoreLabel);
 
     this.addEventListener(Event.ENTER_FRAME, function() {
       enterFrame.call(this);
     });
 
-    this.addEventListener(Event.TOUCH_END, function() {
-      koguma.jump();
+    initTouchAction.call(this);
+  };
+
+  function initTouchAction() {
+    var touchedPosition;
+
+    this.addEventListener(Event.TOUCH_START, function(event) {
+      touchedPosition = event.y;
+    });
+    this.addEventListener(Event.TOUCH_MOVE, function(event) {
+      vectorY = event.y - touchedPosition;
+    });
+    this.addEventListener(Event.TOUCH_END, function(event) {
+      vectorY = 0;
     });
   };
 
   function enterFrame() {
-    if (rand(50) == 1) {
+    koguma.move(vectorY / 5);
+    if (koguma.y < MARGIN_TOP || koguma.y + koguma.height > MARGIN_TOP + HEIGHT) {
+      // out of stage
+      core.end();
+    }
+
+    // add Score
+    if (++scoreLabel.score % 500 == 0) {
+      level++;
+    }
+
+    // add Enemy
+    if (scoreLabel.score % 30 == 0) {
       var enemy = createEnemy.call(this);
       enemies.push(enemy);
       this.addChild(enemy);
@@ -61,9 +99,9 @@ var Field = enchant.Class.create(enchant.Group, (function() {
   };
 
   function createEnemy() {
-    var enemy = new Enemy();
+    var enemy = new Enemy(level);
     enemy.x = core.width;
-    enemy.y = core.height - ground.height - enemy.height;
+    enemy.y = rand(HEIGHT - enemy.height) + MARGIN_TOP;
 
     var self = this;
     enemy.addEventListener('dissapear_enemy', function(event) {
@@ -87,108 +125,49 @@ var Field = enchant.Class.create(enchant.Group, (function() {
 
 var Koguma = enchant.Class.create(enchant.Sprite, (function(){
 
-  var core, images, frameCount, isJumping, jumpSpeed, defaultPositionY;
+  var core;
 
-  function initialize(width, height, y) {
-    enchant.Sprite.call(this, width, height);
-    defaultPositionY = y;
+  function initialize() {
+    enchant.Sprite.call(this, 24, 32);
 
     core = enchant.Core.instance;
-    images = [
-      core.assets['./koguma1.png'],
-      core.assets['./koguma2.png']
-    ];
-    frameCount = 0;
-    isJumping = false;
+    this.image = core.assets['./images/cogoo.png'];
 
+    // animation
+    this.frame = 0;
     this.addEventListener(Event.ENTER_FRAME, function() {
-      if (isJumping) {
-        calcPosition.call(this);
-      }
-      else if (frameCount++ % 10 == 0) {
-        walk.call(this);
-      }
+      this.frame = ++this.frame % 4;
     });
   };
 
-  function walk() {
-    if (this.image == images[0]) {
-      this.image = images[1];
-    }
-    else {
-      this.image = images[0];
-    }
-  };
-
-  function jump() {
-    if (!isJumping) {
-      jumpSpeed = 15;
-      isJumping = true;
-    }
-  };
-
-  function calcPosition() {
-    jumpSpeed -= 1;
-
-    this.y = this.y - jumpSpeed;
-    if (this.y > defaultPositionY) {
-      this.y = defaultPositionY;
-      isJumping = false;
-    }
-  };
+  function move(distance) {
+    this.y += distance;
+  }
 
   return {
     initialize : initialize,
-    jump : jump
-  };
-})());
-
-var Ground = enchant.Class.create(enchant.Sprite, (function(){
-
-  var core, frameCount;
-
-  function initialize() {
-    core = enchant.Core.instance;
-    enchant.Sprite.call(this, core.width + 16, 32);
-
-    this.image = core.assets['./ground.png'];
-    this.x = 0;
-    this.y = core.height - 32;
-
-    frameCount = 0;
-    this.addEventListener(Event.ENTER_FRAME, function() {
-      frameCount++;
-      move.call(this);
-    });
-  };
-
-  function move() {
-    this.x = - frameCount % 16;
-  };
-
-  return {
-    initialize : initialize
+    move : move
   };
 })());
 
 var Enemy = enchant.Class.create(enchant.Sprite, (function(){
-  var core, frameCount;
+  var core;
 
-  function initialize() {
+  function initialize(level) {
     enchant.Sprite.call(this, 30, 44);
     core = enchant.Core.instance;
 
-    this.image = core.assets['./enemy.png'];
+    this.image = core.assets['./images/enemy.png'];
 
-    frameCount = 0;
+    this.speed = 4 * level;
+
     this.addEventListener(Event.ENTER_FRAME, function() {
-      frameCount++;
       move.call(this);
     });
   };
 
   function move() {
-    this.x -= 8;
+    this.x -= this.speed;
 
     if (this.x + this.width < 0) {
       var event = new enchant.Event('dissapear_enemy');

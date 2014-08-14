@@ -10,9 +10,9 @@ function rateOf(num) {
 
 window.onload = function() {
     core = new Core(320, 480);
-    core.rootScene.backgroundColor = 'rgb(80,239,255)';
+    core.rootScene.backgroundColor = 'rgb(173, 209, 218)';
 
-    core.preload('./images/cogoo.png', './images/enemy.png', './images/background.png');
+    core.preload('./images/cogoo.png', './images/enemy.png', './images/stage.png');
 
     core.onload = function() {
       var field = new Field();
@@ -27,7 +27,8 @@ window.onload = function() {
 var Field = enchant.Class.create(enchant.Group, (function() {
   var MARGIN_TOP = 100;
   var HEIGHT = 300;
-  var core, koguma, scoreLabel, vectorY = 0;
+  var IMAGE_MARGIN = 20; //画像内の枠
+  var core, background, koguma, scoreLabel, vectorY = 0;
   var level = 1;
   var enemies = [];
 
@@ -36,8 +37,8 @@ var Field = enchant.Class.create(enchant.Group, (function() {
     enchant.Group.call(this, core.width, core.height);
 
     // background image
-    var background = new Sprite(core.width, HEIGHT);
-    background.image = core.assets['./images/background.png'];
+    background = new Sprite(core.width + 20, HEIGHT);
+    background.image = core.assets['./images/stage.png'];
     background.y = MARGIN_TOP;
     this.addChild(background);
 
@@ -73,8 +74,13 @@ var Field = enchant.Class.create(enchant.Group, (function() {
   };
 
   function enterFrame() {
+    // move image
+    background.x = -(scoreLabel.score * 2) % 20;
+
+    // koguma
     koguma.move(vectorY / 5);
-    if (koguma.y < MARGIN_TOP || koguma.y + koguma.height > MARGIN_TOP + HEIGHT) {
+    if (koguma.y < (MARGIN_TOP + IMAGE_MARGIN)
+      || koguma.y + koguma.height > MARGIN_TOP + HEIGHT - IMAGE_MARGIN) {
       // out of stage
       core.end();
     }
@@ -101,7 +107,7 @@ var Field = enchant.Class.create(enchant.Group, (function() {
   function createEnemy() {
     var enemy = new Enemy(level);
     enemy.x = core.width;
-    enemy.y = rand(HEIGHT - enemy.height) + MARGIN_TOP;
+    enemy.y = rand(HEIGHT - enemy.height - IMAGE_MARGIN * 2) + MARGIN_TOP + IMAGE_MARGIN;
 
     var self = this;
     enemy.addEventListener('dissapear_enemy', function(event) {

@@ -91,7 +91,7 @@ var Field = enchant.Class.create(enchant.Group, (function() {
     }
 
     // add Enemy
-    if (scoreLabel.score % ((20 / level) + 10) == 0) {
+    if (scoreLabel.score % (~~(20 / level) + 10) == 0) {
       var enemy = createEnemy.call(this);
       enemies.push(enemy);
       this.addChild(enemy);

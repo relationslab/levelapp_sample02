@@ -1,4 +1,6 @@
 var BASE_URL = "http://levelapp-env.elasticbeanstalk.com/"
+//var BASE_URL = "http://localhost:1337/"
+
 
 var EndScene = enchant.Class.create(enchant.Scene, {
   initialize : function(score) {
@@ -26,7 +28,7 @@ var EndScene = enchant.Class.create(enchant.Scene, {
       },
       dataType: 'json',
       success : function() {
-        postScoreSucceed.call(self);
+        self.postScoreSucceed.call(self);
       },
       error : function() {
         alert("スコアの送信に失敗しました");
@@ -34,24 +36,36 @@ var EndScene = enchant.Class.create(enchant.Scene, {
     });
   },
   postScoreSucceed : function() {
+    var self = this;
     $.ajax({
-      type: 'POST',
+      type: 'GET',
       url: BASE_URL + 'score',
       data : {
         gameId : this.core.gameId
       },
       dataType: 'json',
       success : function(res) {
-        showHighScore(res);
+        self.showHighScore(res);
       },
       error : function() {
         alert("ハイスコアの取得に失敗しました");
       }
     })
   },
-  showHighScore : function(Scores) {
-    score.forEach(function(score) {
-      console.log(score.score);
+  showHighScore : function(scores) {
+    scores.sort(function(a, b) {
+      if (a.score > b.score) return 1;
+      if (a.score < b.score) return -1;
+      return 0;
     });
+
+    var msg = "ハイスコア\n";
+    var count = 0;
+    for (var i = 0; i < scores.length && i < 3; i++) {
+      if (scores[i].score) {
+        msg += scores[i].userName + " : " + scores[i].score + "\n";
+      }
+    }
+    alert(msg);
   }
 });

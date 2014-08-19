@@ -10,8 +10,8 @@ var PlayScene = enchant.Class.create(enchant.Scene, {
   }
 });
 
-function gameover(core) {
-  this.core.replaceScene(new EndScene());
+function gameover(score) {
+  this.core.replaceScene(new EndScene(score));
 }
 
 function rand(num) {
@@ -76,7 +76,7 @@ var Field = enchant.Class.create(enchant.Group, {
     if (this.koguma.y < (this.MARGIN_TOP + this.IMAGE_MARGIN)
       || this.koguma.y + this.koguma.height > this.MARGIN_TOP + this.HEIGHT - this.IMAGE_MARGIN) {
       // out of stage
-      gameover();
+      gameover(this.scoreLabel.score);
     }
 
     // add Score
@@ -93,7 +93,7 @@ var Field = enchant.Class.create(enchant.Group, {
 
     for (var i = 0; i < this.enemies.length; i++) {
       if (this.koguma.intersect(this.enemies[i])) {
-        gameover();
+        gameover(this.scoreLabel.score);
       }
     }
   },

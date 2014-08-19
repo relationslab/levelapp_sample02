@@ -22,7 +22,7 @@ var EndScene = enchant.Class.create(enchant.Scene, {
       type: 'POST',
       url: BASE_URL + 'score',
       data: {
-        user_name : "hoge",
+        user_name : "テストユーザ",
         score : score,
         gameId : this.core.gameId
       },
@@ -54,8 +54,8 @@ var EndScene = enchant.Class.create(enchant.Scene, {
   },
   showHighScore : function(scores) {
     scores.sort(function(a, b) {
-      if (a.score > b.score) return 1;
-      if (a.score < b.score) return -1;
+      if (a.score < b.score) return 1;
+      if (a.score > b.score) return -1;
       return 0;
     });
 

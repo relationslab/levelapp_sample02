@@ -5,10 +5,28 @@ var PlayScene = enchant.Class.create(enchant.Scene, {
     this.core = enchant.Core.instance;
 
     // フィールドの設定
-    var field = new Field();
-    field.x = 0;
-    field.y = 0;
-    this.addChild(field);
+    this.field = new Field();
+    this.field.x = 0;
+    this.field.y = 0;
+    this.addChild(this.field);
+
+    // タッチ操作の設定
+    this.initTouchAction();
+  },
+  initTouchAction : function() {
+    var touchedPositionY = 0;
+    this.addEventListener(Event.TOUCH_START, function(event) {
+      // タッチを開始したときの座標を記録
+      touchedPositionY = event.y;
+    });
+    this.addEventListener(Event.TOUCH_MOVE, function(event) {
+      // ドラッグ(スワイプ)したときに速度が変わる
+      this.field.velocityY = event.y - touchedPosition;
+    });
+    this.addEventListener(Event.TOUCH_END, function(event) {
+      // タッチ終了で速度はゼロに
+      this.field.velocityY = 0;
+    });
   }
 });
 
@@ -23,7 +41,7 @@ var Field = enchant.Class.create(enchant.Group, {
     this.IMAGE_MARGIN = 20; //画像内の枠
     this.level = 1;  //レベル(初期 = 1)
     this.enemies = [];  //敵の配列
-    this.vectorY = 0;  // コグマの速度
+    this.velocityY = 0;  // コグマの縦方向の速度
 
     // フィールドの背景画像
     this.background = new Sprite(this.core.width + 20, this.HEIGHT);
@@ -37,42 +55,26 @@ var Field = enchant.Class.create(enchant.Group, {
     this.koguma.y = this.core.height / 2;
     this.addChild(this.koguma);
 
-    // 点数のラベル
+    // 点数ラベル
     this.scoreLabel = new ScoreLabel(5, 5);
     this.addChild(this.scoreLabel);
 
-    // フレームが切り替わったときのイベント
     this.addEventListener(Event.ENTER_FRAME, function() {
+      // 1フレームごとに実行される
       this.enterFrame();
-    });
-
-    // タッチ操作の設定
-    this.initTouchAction();
-  },
-  initTouchAction : function() {
-    // タッチを開始したとき
-    this.addEventListener(Event.TOUCH_START, function(event) {
-      this.touchedPosition = event.y;
-    });
-    // ドラッグ(スワイプ)したとき
-    this.addEventListener(Event.TOUCH_MOVE, function(event) {
-      this.vectorY = event.y - this.touchedPosition;
-    });
-    // タッチを終了したとき
-    this.addEventListener(Event.TOUCH_END, function(event) {
-      this.vectorY = 0;
     });
   },
   enterFrame : function() {
-    // 画像をずらす(動いているように見せる)
+    // １フレームごとに画像をずらすことで動いているように見せる
     this.background.x = -(this.scoreLabel.score * 2) % 20;
 
-    // コグマを移動
-    this.koguma.move(this.vectorY / 5);
+    // コグマを移動。5で割っているのは適当な速度調整
+    this.koguma.move(this.velocityY / 5);
 
-    // コースアウトした？
+    // コースアウトしたか？
     if (this.koguma.y < (this.MARGIN_TOP + this.IMAGE_MARGIN)
       || this.koguma.y + this.koguma.height > this.MARGIN_TOP + this.HEIGHT - this.IMAGE_MARGIN) {
+
       this.core.gameover(this.scoreLabel.score);
     }
 
@@ -126,7 +128,6 @@ var Koguma = enchant.Class.create(enchant.Sprite, {
     this.core = enchant.Core.instance;
     this.image = this.core.assets['./images/cogoo.png'];
 
-    // animation
     this.frame = 0;
     this.addEventListener(Event.ENTER_FRAME, function() {
       this.frame = ++this.frame % 4;
@@ -153,6 +154,7 @@ var Enemy = enchant.Class.create(enchant.Sprite, {
   move : function() {
     this.x -= this.speed;
 
+    // 左端まで移動したらイベントを発行
     if (this.x + this.width < 0) {
       var event = new enchant.Event('dissapear_enemy');
       this.dispatchEvent(event);

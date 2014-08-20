@@ -1,7 +1,7 @@
 enchant();
 
 window.onload = function() {
-    core = new Core(320, 480);
+    core = new enchant.levelapp.Core(320, 480);
     core.rootScene.backgroundColor = 'rgb(173, 209, 218)';
     core.gameId = "123456"
 
@@ -12,9 +12,5 @@ window.onload = function() {
       './images/enemy.png',
       './images/stage.png');
 
-    core.onload = function() {
-      this.pushScene(new TitleScene());
-    }
-
-    core.start();
+    core.gameStart(PlayScene);
 }

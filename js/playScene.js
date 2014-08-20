@@ -10,18 +10,6 @@ var PlayScene = enchant.Class.create(enchant.Scene, {
   }
 });
 
-function gameover(score) {
-  this.core.replaceScene(new EndScene(score));
-}
-
-function rand(num) {
-    return Math.floor(Math.random() * num);
-}
-
-function rateOf(num) {
-  return rand(num) == 1;
-}
-
 var Field = enchant.Class.create(enchant.Group, {
   initialize : function() {
     this.core = enchant.Core.instance;
@@ -76,7 +64,7 @@ var Field = enchant.Class.create(enchant.Group, {
     if (this.koguma.y < (this.MARGIN_TOP + this.IMAGE_MARGIN)
       || this.koguma.y + this.koguma.height > this.MARGIN_TOP + this.HEIGHT - this.IMAGE_MARGIN) {
       // out of stage
-      gameover(this.scoreLabel.score);
+      this.core.gameover(this.scoreLabel.score);
     }
 
     // add Score
@@ -93,14 +81,14 @@ var Field = enchant.Class.create(enchant.Group, {
 
     for (var i = 0; i < this.enemies.length; i++) {
       if (this.koguma.intersect(this.enemies[i])) {
-        gameover(this.scoreLabel.score);
+        this.core.gameover(this.scoreLabel.score);
       }
     }
   },
   createEnemy : function() {
     var enemy = new Enemy(this.level);
     enemy.x = this.core.width;
-    enemy.y = rand(this.HEIGHT - enemy.height - this.IMAGE_MARGIN * 2) + this.MARGIN_TOP + this.IMAGE_MARGIN;
+    enemy.y = enchant.levelapp.util.rand(this.HEIGHT - enemy.height - this.IMAGE_MARGIN * 2) + this.MARGIN_TOP + this.IMAGE_MARGIN;
 
     var self = this;
     enemy.addEventListener('dissapear_enemy', function(event) {

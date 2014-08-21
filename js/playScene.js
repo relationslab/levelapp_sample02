@@ -21,7 +21,7 @@ var PlayScene = enchant.Class.create(enchant.Scene, {
     });
     this.addEventListener(Event.TOUCH_MOVE, function(event) {
       // ドラッグ(スワイプ)したときに速度が変わる
-      this.field.velocityY = event.y - touchedPosition;
+      this.field.velocityY = event.y - touchedPositionY;
     });
     this.addEventListener(Event.TOUCH_END, function(event) {
       // タッチ終了で速度はゼロに
